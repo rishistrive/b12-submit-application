@@ -29,18 +29,21 @@ def utc_iso8601_millis() -> str:
 def build_payload() -> dict:
     name = _env("name", "B12_NAME")
     email = _env("email", "B12_EMAIL")
-    resume = _env("resume", "B12_RESUME_LINK")
+    resume_link = _env("resume_link", "B12_RESUME_LINK")
+    repository_link = _env("repository_link", "REPOSITORY_LINK")
+    action_run_link = _env("action_run_link", "ACTION_RUN_LINK")
 
-    if not all([name, email, resume]):
+    if not all([name, email, resume_link, repository_link, action_run_link]):
         raise ValueError("Missing required environment variables")
 
     return {
         "timestamp": utc_iso8601_millis(),
         "name": name,
         "email": email,
-        "resume": resume,
+        "resume_link": resume_link,
+        "repository_link": repository_link,
+        "action_run_link": action_run_link,
     }
-
 
 def canonical_json_bytes(payload: dict) -> bytes:
     canonical = json.dumps(
