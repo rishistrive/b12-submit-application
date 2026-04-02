@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 ENDPOINT = "https://b12.io/apply/submission"
-DEFAULT_SIGNING_SECRET = "hello-there-from-b12"
 
 
 def _env(*keys: str) -> str | None:
@@ -30,42 +29,35 @@ def utc_iso8601_millis() -> str:
 def build_payload() -> dict:
     name = _env("name", "B12_NAME")
     email = _env("email", "B12_EMAIL")
-    resume_link = _env("resume_link", "B12_RESUME_LINK")
+    resume = _env("resume", "B12_RESUME_LINK")
 
-    repository_link = _env("repository_link", "B12_REPOSITORY_LINK")
-    # if not repository_link:
-    #     server = os.getenv("GITHUB_SERVER_URL")
-    #     repo = os.getenv("GITHUB_REPOSITORY")
-    #     if server and repo:
-    #         repository_link = f"{server}/{repo}"
+    if not all([name, email, resume]):
+        raise ValueError("Missing required environment variables")
 
-    action_run_link = _env("action_run_link", "B12_ACTION_RUN_LINK")
-    # if not action_run_link:
-    #     server = os.getenv("GITHUB_SERVER_URL")
-    #     repo = os.getenv("GITHUB_REPOSITORY")
-    #     run_id = os.getenv("GITHUB_RUN_ID")
-    #     if server and repo and run_id:
-    #         action_run_link = f"{server}/{repo}/actions/runs/{run_id}"
-
-    payload = {
-        "action_run_link": action_run_link,
-        "email": email,
-        "name": name,
-        "repository_link": repository_link,
-        "resume_link": resume_link,
+    return {
         "timestamp": utc_iso8601_millis(),
+        "name": name,
+        "email": email,
+        "resume": resume,
     }
-
-    return payload
 
 
 def canonical_json_bytes(payload: dict) -> bytes:
-    canonical = json.dumps(payload, separators=(",", ":"), sort_keys=True, ensure_ascii=False)
+    canonical = json.dumps(
+        payload,
+        separators=(",", ":"),   
+        sort_keys=True          
+    )
     return canonical.encode("utf-8")
 
 
 def signature_header_value(raw_body: bytes, secret: str) -> str:
-    digest = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
+    digest = hmac.new(
+        secret.encode("utf-8"),
+        raw_body,
+        hashlib.sha256
+    ).hexdigest()
+
     return f"sha256={digest}"
 
 
@@ -73,7 +65,10 @@ def submit() -> str:
     payload = build_payload()
     body = canonical_json_bytes(payload)
 
-    signing_secret = os.getenv("B12_SIGNING_SECRET", DEFAULT_SIGNING_SECRET)
+    signing_secret = os.getenv("B12_SIGNING_SECRET")
+    if not signing_secret:
+        raise ValueError("Missing B12_SIGNING_SECRET")
+
     signature = signature_header_value(body, signing_secret)
 
     request = urllib.request.Request(
@@ -81,7 +76,7 @@ def submit() -> str:
         data=body,
         method="POST",
         headers={
-            "Content-Type": "application/json; charset=utf-8",
+            "Content-Type": "application/json",
             "X-Signature-256": signature,
         },
     )
@@ -112,7 +107,8 @@ def main() -> int:
         print(f"Submission failed: {exc}", file=sys.stderr)
         return 1
 
-    print(receipt)
+    print("Submission successful!")
+    print(f"Receipt: {receipt}")
     return 0
 
 
