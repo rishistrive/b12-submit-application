@@ -1,0 +1,4 @@
+## !! Could not determine repository location
+-e /home/developer/repo/b12-submit-application
+getenv==0.2.0
+python-dotenv==1.2.2
