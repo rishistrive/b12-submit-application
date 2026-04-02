@@ -26,4 +26,6 @@ jobs:
           B12_EMAIL: ${{ secrets.B12_EMAIL }}
           B12_RESUME_LINK: ${{ secrets.B12_RESUME_LINK }}
           B12_SIGNING_SECRET: ${{ secrets.B12_SIGNING_SECRET }}
+          REPOSITORY_LINK: ${{ secrets.REPOSITORY_LINK }}    
+          ACTION_RUN_LINK: ${{ secrets.ACTION_RUN_LINK }}   
         run: python -m b12_submit
